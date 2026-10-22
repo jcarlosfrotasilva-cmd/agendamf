@@ -46,6 +46,12 @@ export function Shell({
               </p>
               <p className="mt-1 truncate text-xs font-semibold text-white">{usuario.nome}</p>
               <p className="truncate text-[10px] text-slate-400">{usuario.email}</p>
+              <Link
+                href="/minha-senha"
+                className="mt-1.5 inline-block text-[10px] font-semibold text-indigo-300 hover:text-indigo-200"
+              >
+                🔑 Minha senha
+              </Link>
               <BotaoSair papel={usuario.papel} />
             </div>
           ) : null}

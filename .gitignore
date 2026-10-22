@@ -1,0 +1,14 @@
+node_modules/
+.next/
+.vercel/
+out/
+dist/
+build/
+coverage/
+*.log
+.env
+.env.*
+!.env.example
+
+# Configurações privadas de produção
+config/producao.json

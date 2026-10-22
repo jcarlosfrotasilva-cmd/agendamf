@@ -93,10 +93,10 @@ export function LoginForm({ primeiroAcesso }: { primeiroAcesso: boolean }) {
           className={inputClass}
           value={senha}
           onChange={(event) => setSenha(event.target.value)}
-          placeholder="mínimo de 6 caracteres"
+          placeholder="mínimo de 8 caracteres, com letras e números"
           autoComplete={primeiroAcesso ? "new-password" : "current-password"}
           required
-          minLength={6}
+          minLength={8}
         />
       </label>
 

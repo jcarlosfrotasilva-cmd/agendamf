@@ -12,6 +12,7 @@ import {
   verificarSenha,
 } from "@/lib/auth";
 import { registrarAuditoria } from "@/lib/repo";
+import { validarSenhaForte } from "@/lib/senha";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +33,6 @@ export async function POST(request: NextRequest) {
     const senha = body.senha ?? "";
 
     if (!email || !/\S+@\S+\.\S+/.test(email)) return badRequest("Informe um e-mail válido.");
-    if (senha.length < 6) return badRequest("A senha deve ter pelo menos 6 caracteres.");
 
     const existentes = await contarUsuarios();
 
@@ -45,6 +45,9 @@ export async function POST(request: NextRequest) {
       }
       const nome = (body.nome ?? "").trim();
       if (nome.length < 3) return badRequest("Informe o nome completo do administrador.");
+
+      const politica = validarSenhaForte(senha, { email, nome });
+      if (!politica.ok) return badRequest(politica.mensagem);
 
       const [criado] = await db
         .insert(usuarios)

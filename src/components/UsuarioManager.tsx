@@ -148,7 +148,7 @@ export function UsuarioManager({
           </Field>
           <Field
             label={editando ? "Nova senha (opcional)" : "Senha inicial"}
-            hint={editando ? "Preencha apenas se quiser redefinir a senha." : "Mínimo de 6 caracteres."}
+            hint={editando ? "Preencha apenas se quiser redefinir. Mín. 8 caracteres, com letras e números." : "Mínimo de 8 caracteres, com letras e números."}
           >
             <input
               type="password"
@@ -156,7 +156,7 @@ export function UsuarioManager({
               value={form.senha}
               onChange={(event) => setForm({ ...form, senha: event.target.value })}
               placeholder="••••••"
-              minLength={editando ? undefined : 6}
+              minLength={8}
               required={!editando}
             />
           </Field>

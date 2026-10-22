@@ -30,6 +30,47 @@ O sistema conecta-se **apenas pelo servidor** à connection string do Supabase.
 > A base inicia **sem dados de demonstração** — nenhum compromisso ou gestor fictício é criado.
 > O script de estrutura já encerra com comandos de limpeza comentados/explicitados para reinício.
 
+## Configuração persistente (hospedagem)
+
+A plataforma de hospedagem gerencia `.env`/`.env.local` e pode reescrevê-los entre
+implantações. Por isso as credenciais de produção ficam em **`config/producao.json`**,
+carregado por `next.config.ts` (e, em fallback, por `src/db/index.ts`):
+
+```json
+{
+  "SUPABASE_DB_URL": "postgresql://postgres.<projeto>:<senha>@aws-1-sa-east-1.pooler.supabase.com:6543/postgres",
+  "SESSION_SECRET": "<64 caracteres>",
+  "NEXT_PUBLIC_ESCOLA_NOME": "EE PROFA. MARLENE FRATTINI"
+}
+```
+
+- Use a porta **6543 (transaction pooler)** em produção: o modo sessão (5432) limita 15
+  clientes por projeto e provoca erros 500 quando o pool esgota.
+- O pool da aplicação fica em **3 conexões por instância** com liberação de ociosas em 10 s.
+- `config/producao.json` contém segredos: mantenha permissão `600` e **nunca** o versione em
+  repositório público.
+
+## Senhas e recuperação de acesso
+
+- **Armazenamento:** hash `scrypt` com salt aleatório por usuário (`scrypt$salt$hash`, 168 caracteres).
+  A senha em texto nunca é gravada, exibida ou enviada — nem a administração consegue lê-la.
+- **Troca pelo próprio usuário:** menu lateral → **🔑 Minha senha** (`/minha-senha`). Exige a senha
+  atual e aplica a política: mínimo 8 caracteres, ao menos uma letra e um número, sem conter o
+  e-mail/nome e sem sequências comuns.
+- **Redefinição pela administração:** *Usuários e Acessos → Editar → Nova senha*.
+- **Perda total de acesso (sem nenhum admin ativo):** recuperação pelo servidor:
+
+  ```bash
+  node scripts/reset-senha.mjs --listar
+  node scripts/reset-senha.mjs gestao@escola.edu.br "NovaSenha2026" --promover
+  ```
+
+  O script lê `.env.local` (prioridade) e `.env`, grava apenas o hash e registra a ação na auditoria.
+- **Professores não têm senha:** o acesso é o link pessoal `(/professor/<código>)`, somente leitura,
+  que pode ser renovado (invalidando o anterior) em *Professores → 🔗 Link de acesso*.
+- **Auditoria:** `LOGIN`, `LOGIN_FALHA`, `SENHA_ALTERADA`, `SENHA_FALHA` e `SENHA_REDEFINIDA` ficam
+  registrados com data e hora.
+
 ## Acesso ao sistema (quem entra e como)
 
 | Perfil | Como acessa | O que pode fazer |
@@ -159,8 +200,9 @@ npm run typecheck  # verificação de tipos
 ### Variáveis de ambiente relevantes
 
 ```bash
+# Gravadas em .env.local (tem prioridade sobre .env e não é reescrito pela plataforma)
 SUPABASE_DB_URL=...            # banco de dados (Supabase)
-SESSION_SECRET=...             # assinatura dos cookies de sessão (defina em produção)
+SESSION_SECRET=...             # assinatura dos cookies de sessão (obrigatório em produção)
 WHATSAPP_PROVIDER=zapi         # disparo automático de WhatsApp (opcional)
 CRON_SECRET=...                # protege a rota do agendador
 ```

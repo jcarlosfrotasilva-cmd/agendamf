@@ -7,8 +7,15 @@ import { ESCOLA } from "@/lib/escola";
 export const dynamic = "force-dynamic";
 
 export default async function EntrarPage() {
-  const existentes = await contarUsuarios();
-  const primeiroAcesso = existentes === 0;
+  // Se o banco oscilar, a tela continua abrindo com o formulário de login.
+  let primeiroAcesso = false;
+  let bancoIndisponivel = false;
+  try {
+    const existentes = await contarUsuarios();
+    primeiroAcesso = existentes === 0;
+  } catch {
+    bancoIndisponivel = true;
+  }
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
@@ -75,6 +82,13 @@ export default async function EntrarPage() {
                 ? "Esta tela aparece apenas uma vez, enquanto não houver usuários cadastrados."
                 : "Use o e-mail e a senha cadastrados pela administração da escola."}
             </p>
+
+            {bancoIndisponivel ? (
+              <p className="mt-4 rounded-xl bg-amber-50 px-3.5 py-2.5 text-[11px] font-medium leading-relaxed text-amber-800 ring-1 ring-amber-200">
+                Instabilidade momentânea na conexão com o banco de dados. Tente entrar novamente em
+                alguns segundos — se persistir, verifique a página de diagnóstico.
+              </p>
+            ) : null}
 
             <div className="mt-5">
               <Suspense fallback={<p className="text-xs text-slate-500">Carregando…</p>}>

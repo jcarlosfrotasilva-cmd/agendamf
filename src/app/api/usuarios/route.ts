@@ -13,6 +13,7 @@ import {
 } from "@/lib/auth";
 import { registrarAuditoria } from "@/lib/repo";
 import { PAPEIS } from "@/lib/auth";
+import { validarSenhaForte } from "@/lib/senha";
 
 export const dynamic = "force-dynamic";
 
@@ -72,7 +73,8 @@ export async function POST(request: NextRequest) {
 
     if (nome.length < 3) return badRequest("Informe o nome completo.");
     if (!/\S+@\S+\.\S+/.test(email)) return badRequest("Informe um e-mail válido.");
-    if (senha.length < 6) return badRequest("A senha deve ter pelo menos 6 caracteres.");
+    const politica = validarSenhaForte(senha, { email, nome });
+    if (!politica.ok) return badRequest(politica.mensagem);
     if (!PAPEIS_KEYS.includes(papel)) return badRequest("Perfil de acesso inválido.");
 
     const existente = await buscarUsuarioPorEmail(email);
@@ -146,6 +148,14 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
+    if (body.senha) {
+      const politicaSenha = validarSenhaForte(body.senha, {
+        email: usuario.email,
+        nome: body.nome?.trim() || usuario.nome,
+      });
+      if (!politicaSenha.ok) return badRequest(politicaSenha.mensagem);
+    }
+
     const [atualizado] = await db
       .update(usuarios)
       .set({
@@ -153,8 +163,14 @@ export async function PATCH(request: NextRequest) {
         papel,
         cargo: body.cargo?.trim() ?? usuario.cargo,
         ativo,
-        ...(body.senha && body.senha.length >= 6
-          ? { senhaHash: gerarHashSenha(body.senha) }
+        ...(body.senha
+          ? (() => {
+              const politica = validarSenhaForte(body.senha as string, {
+                email: usuario.email,
+                nome: body.nome?.trim() || usuario.nome,
+              });
+              return politica.ok ? { senhaHash: gerarHashSenha(body.senha as string) } : {};
+            })()
           : {}),
       })
       .where(eq(usuarios.id, id))
